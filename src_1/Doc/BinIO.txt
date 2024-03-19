@@ -1,0 +1,5 @@
+require : fs, ./tools.js
+
+functions
+    readFromBase
+    deleteData

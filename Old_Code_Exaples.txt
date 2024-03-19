@@ -1,0 +1,89 @@
+===============OLD UPDATE FUNCTION======================
+
+function update(tebleName, elementName, newValue, indexOfRow = 1){
+    const tablePath = DBpath + "/"+ tebleName + ".bin";
+    var [indexList,tableConfig] = tableIndexList(DBpath, tebleName);
+    let elementIndex = 0;
+    tableConfig.forEach(element => {
+        if(tableConfig[elementIndex] != elementName){
+            elementIndex++;
+        }
+    });
+    let updatedRow = updateElement(DBpath, newValue, elementIndex, tebleName, indexList[indexOfRow]);
+    let difference = (parseInt(indexList[indexOfRow]) - parseInt(indexList[indexOfRow+1]))+updatedRow.length;
+    var data = new Uint8Array(updatedRow);
+    for(var i = indexOfRow+1;i < indexList.length-1;i++){
+        data = ([...data,...readElement(tablePath, parseInt(indexList[i]), NEXT_ROW),NEXT_ROW]);
+        indexList[i] = (difference + parseInt(indexList[i])).toString();
+    }
+    indexList[i] = (difference + parseInt(indexList[i])).toString();
+    if(data[data.length-1] != NEXT_ROW) {data= ([...data, NEXT_ROW]);}
+    console.log(new Buffer.from(data),indexList[indexOfRow]);
+
+    //writing the changes to file
+    fs.writeSync(fs.openSync(tablePath, "r+") , new Buffer.from(data), 0, data.length, parseInt(indexList[indexOfRow]));   
+    if(difference < 0)  {shortenFile(tablePath,parseInt(indexList[i]));}
+    updateIndexFile(DBpath, tebleName,indexList);
+
+    return data;
+}
+
+===============================\
+export class binDB {
+    session = false;
+
+    constructor() {
+        // ... (unchanged)
+    }
+
+    connect(username, passsword, database, host) {
+        if (validateUser(this, username, passsword)) {
+            this.username = username;
+            this.passsword = passsword;
+            this.database = database;
+            this.host = host;
+            this.DBpath = this.conf.DefaultDBpath + this.database;
+            this.session = true; // Set session to true upon successful validation
+            console.log("connected");
+        } else {
+            console.log("invalid Login credentials");
+        }
+    }
+
+    // Add this private method to check if the session is active
+    checkSession() {
+        if (!this.session) {
+            throw new Error("Session not active. Please connect first.");
+        }
+    }
+
+    insert(tableName, arrayData, option = 0) {
+        this.checkSession(); // Check session before performing any operation
+        // ... (unchanged)
+    }
+
+    findWhere(tebleName, elementName, value) {
+        this.checkSession(); // Check session before performing any operation
+        // ... (unchanged)
+    }
+
+    deleteRow(tebleName, indexOfRow) {
+        this.checkSession(); // Check session before performing any operation
+        // ... (unchanged)
+    }
+
+    delete(tebleName, WhereElement, elementValue) {
+        this.checkSession(); // Check session before performing any operation
+        // ... (unchanged)
+    }
+
+    updateRow(tebleName, elementName, newValue, indexOfRow = 1) {
+        this.checkSession(); // Check session before performing any operation
+        // ... (unchanged)
+    }
+
+    update(fromTable, whereElement, elementValue, newValue, updateElement = whereElement) {
+        this.checkSession(); // Check session before performing any operation
+        // ... (unchanged)
+    }
+}
