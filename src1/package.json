@@ -1,0 +1,16 @@
+{
+  "name": "bindb",
+  "version": "1.0.0",
+  "description": "Random Project",
+  "type": "module",
+  "main": "../BinDB.js",
+  "scripts": {
+    "run": "node bindbTest.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "",
+  "license": "ISC"
+}
