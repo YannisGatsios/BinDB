@@ -2,12 +2,16 @@ import fs from 'fs';
 import { arrayToBuffer,bufferDataToArray,endOfFirstVariable,shortenFile } from './tools.js';
 
 
-export function readRow(path, indexStart = 0){
+export function readRow(path, indexStart = 0, endIndex=0){
     var data = fs.readFileSync(path);
     var buf = new Buffer.alloc(data.length-indexStart);
     data.copy(buf,0,indexStart,data.length);
 
-    var bufToSend = new Buffer.alloc(endOfFirstVariable(buf));
+    let rowEnd = endIndex-indexStart;
+    if(endIndex === 0){
+        rowEnd = endOfFirstVariable(buf);
+    }
+    var bufToSend = new Buffer.alloc(rowEnd);
     buf.copy(bufToSend,0,0,buf.length);
 
     return [bufToSend, indexStart+bufToSend.length];

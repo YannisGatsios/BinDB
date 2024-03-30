@@ -75,3 +75,15 @@ export function updateValuesOfArray(Array, columnsIndexArray, newValuesArray){
     }
     return Array;
 }
+
+export function requestData(data){
+    let result = [];
+    if(data.split(",").includes("255")){
+        data.split(",255,").forEach((element) => {
+            result = [...result, new TextDecoder().decode(new Uint8Array(element.split(",")))];
+        })
+    }else{
+        result = new TextDecoder().decode(new Uint8Array(data.split(",")));
+    }
+    return result;
+}

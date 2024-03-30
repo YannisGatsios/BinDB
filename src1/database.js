@@ -1,8 +1,9 @@
-import { appendIndexe, deleteIndex, getIndexes,getTableConf } from "./indexing.js";
+import { appendIndexe, deleteIndex, getIndexes,getTableConf, syncIndexList } from "./indexing.js";
 import { validateUser } from "./lib/user.js";
 import { bindbconfig } from "./config.js";
 import { appendData, deleteRow, readRow } from "./lib/FileIO.js";
 import { arrayToBuffer, bufferDataToArray,getColumnsIndex, updateValuesOfArray } from "./lib/tools.js";
+import { dataArray } from "../test.js";
 
 var validated = false;
 var isOnValidationProcesse = false;
@@ -45,7 +46,7 @@ export class databse{
             let tablePath = this.DBpath+"/"+tableName+".bin";
 
             let indexList = getIndexes(this.DBpath, tableName);
-            let conf = getTableConf(this.DBpath,tableName);
+            let conf = getTableConf(this.DBpath, tableName);
 
             if(ArrayData.length == conf.length){
                 appendIndexe(this.DBpath, tableName, parseInt(indexList[indexList.length-1])+arrayToBuffer(ArrayData).length)
@@ -60,22 +61,23 @@ export class databse{
     }
 
     findWhere(tableName, selectColumns, columnsArray = 0, columnsValueArray = 0){
-        if(chechSession() == "connected"){
+        if(chechSession() !== "connected"){return "Not connected"}
+        
             let tablePath = this.DBpath+"/"+tableName+".bin";
-
             let indexList = getIndexes(this.DBpath, tableName);
             let conf = getTableConf(this.DBpath,tableName);
             let indexOfElement = getColumnsIndex(conf,columnsArray)
             let indexOfSelectColumns = getColumnsIndex(conf,selectColumns);
-            
+
             let resultArray = [selectColumns];
             if(selectColumns == "*"){
                 resultArray[0]=conf;
             }
+
             let data = "";
             for(let i = 0;i < indexList.length-1;i++){
-                data = readRow(tablePath,parseInt(indexList[i]))[0];
-                data = bufferDataToArray(data);
+                data = readRow(tablePath,parseInt(indexList[i]), parseInt(indexList[i+1]))[0];
+                data = dataArray(conf, data);
 
                 let j = 0;
                 let tempData = [];
@@ -83,18 +85,16 @@ export class databse{
                 while(j < conf.length){
                     if(data[indexOfElement[j]] == columnsValueArray[j] && (data[indexOfElement[j]] != null && columnsValueArray[j] != null) || columnsValueArray == 0){
                         match = true;
-                    }else if(data[indexOfElement[j]] != columnsValueArray[j] && columnsValueArray != 0){
-                        match = false;
-                        j = conf.length;
-                    }
-                    if(match == true){
-                        if(selectColumns != "*" && match){
+                        if(selectColumns != "*"){
                             for(let y = 0;y < indexOfSelectColumns.length;y++){
                                 tempData[y] = data[indexOfSelectColumns[y]];
                             }
-                        }else if(match){
+                        }else{
                             tempData = data;
                         }
+                    }else if(data[indexOfElement[j]] != columnsValueArray[j] && columnsValueArray != 0){
+                        match = false;
+                        j = conf.length;
                     }
                     j++;
                 }
@@ -103,9 +103,6 @@ export class databse{
                 }
             }
             return resultArray;
-        }else{
-            return "Not conected";
-        }
     }
 
     delete(tableName,columnsArray = 0, columnsValueArray = 0){
@@ -144,14 +141,14 @@ function chechSession(){
     }
     return "disconnected";
 }
-
 let base = new databse();
 console.log(base.connect("root","root123","testDB",""));
-console.log(base.insert("Products",["10","the title","100$","isudfg"]));
-//console.log(base.findWhere("Products",  ['title','description'], ['id','title','price'],["10","the title","100$"]));
+//syncIndexList(base.DBpath, "Products")
+//console.log(base.insert("Products",["10","the title","100$","isudfg"]));
+console.log(base.findWhere("Products",  ['title','description'], ['id','title','price'],["10","the title","100$"]));
 //console.log(base.findWhere("Products",  [], ['id','title','price'],["10","the title","100$"]));
-//console.log(base.findWhere("Products", ['title','description']));
+//console.log(base.findWhere("test", ['name']));
 //console.log(base.findWhere("Products", "*"));
 //console.log(base.delete("Products",  ['id'],["1"]));
-//console.log(base.findWhere("Products", "*"));
+console.log(base.findWhere("Products", "*"));
 //console.log(base.update("Products",['id','title','price'],["10","the title","100$"], ["1", "kk tie"], ["id", "title"]))
