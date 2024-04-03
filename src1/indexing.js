@@ -43,10 +43,8 @@ export function deleteIndex(DBpath, tableName, indexToDelete){
 
             let Array = [];
             for(let i = indexOf+1;i < indexList.length;i++){
-                console.log(parseInt(indexList[i])-(parseInt(indexList[indexOf+1])-parseInt(indexToDelete)))
                 Array = [...Array,(parseInt(indexList[i])-(parseInt(indexList[indexOf+1])-parseInt(indexToDelete))).toString()];
             }
-
             indexList = [...indexList.slice(0,indexOf),...Array];
 
             let indexStart = readRow(indexFilePath)[1];

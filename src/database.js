@@ -7,7 +7,7 @@ import fs from "fs";
 
 var session = false;
 var userValidetionOnGoing = false;
-export class database{
+class dtabase{
     constructor() {
         this.conf = new bindbconfig();
         this.DBpath = this.conf.DefaultDBpath+this.conf.DefaultDB;

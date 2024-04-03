@@ -55,7 +55,7 @@ const server = http.createServer((req,res) => {
             request += chunk;
         });
     
-        req.on('end', function() {
+        req.on('end', () => {
             query = dataToStringArray(new Uint8Array(request.toString().split(",")));
             result = base.insert(query[0], query.slice(1));
     

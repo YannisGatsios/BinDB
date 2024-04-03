@@ -62,49 +62,43 @@ export class databse{
 
     findWhere(tableName, selectColumns, columnsArray = 0, columnsValueArray = 0){
         if(chechSession() !== "connected"){return "Not connected"}
+        let tablePath = this.DBpath+"/"+tableName+".bin";
+        let indexList = getIndexes(this.DBpath, tableName);
+        let conf = getTableConf(this.DBpath,tableName);
+        let indexOfElement = getColumnsIndex(conf,columnsArray)
+        let indexOfSelectColumns = getColumnsIndex(conf,selectColumns);
         
-            let tablePath = this.DBpath+"/"+tableName+".bin";
-            let indexList = getIndexes(this.DBpath, tableName);
-            let conf = getTableConf(this.DBpath,tableName);
-            let indexOfElement = getColumnsIndex(conf,columnsArray)
-            let indexOfSelectColumns = getColumnsIndex(conf,selectColumns);
-
-            let resultArray = [selectColumns];
-            if(selectColumns == "*"){
-                resultArray[0]=conf;
-            }
-
-            let data = "";
-            for(let i = 0;i < indexList.length-1;i++){
-                data = readRow(tablePath,parseInt(indexList[i]), parseInt(indexList[i+1]))[0];
-                data = dataArray(conf, data);
-
-                let j = 0;
-                let tempData = [];
-                let match = false;
-                while(j < conf.length){
-                    if(data[indexOfElement[j]] == columnsValueArray[j] && (data[indexOfElement[j]] != null && columnsValueArray[j] != null) || columnsValueArray == 0){
-                        match = true;
-                        if(selectColumns != "*"){
-                            for(let y = 0;y < indexOfSelectColumns.length;y++){
-                                tempData[y] = data[indexOfSelectColumns[y]];
-                            }
-                        }else{
-                            tempData = data;
+        let resultArray = [];
+        let data = "";
+        for(let i = 0;i < indexList.length-1;i++){
+            data = readRow(tablePath,parseInt(indexList[i]), parseInt(indexList[i+1]))[0];
+            data = dataArray(conf, data);
+            
+            let j = 0;
+            let tempData = [];
+            let match = false;
+            while(j < conf.length){
+                if(data[indexOfElement[j]] == columnsValueArray[j] && (data[indexOfElement[j]] != null && columnsValueArray[j] != null) || columnsValueArray == 0){
+                    match = true;
+                    if(selectColumns !== "*"){
+                        if(!conf.some((item) => selectColumns.includes(item))){return "Column name dose not exist"}
+                        for(let y = 0;y < indexOfSelectColumns.length;y++){
+                            tempData[y] = data[indexOfSelectColumns[y]];
                         }
-                    }else if(data[indexOfElement[j]] != columnsValueArray[j] && columnsValueArray != 0){
-                        match = false;
-                        j = conf.length;
+                    }else{
+                        tempData = data;
                     }
-                    j++;
+                }else if(data[indexOfElement[j]] != columnsValueArray[j] && columnsValueArray != 0){
+                    match = false;
+                    j = conf.length;
                 }
-                if(match){
-                    resultArray = [...resultArray,[tempData,parseInt(indexList[i])]];
-                }
+                j++;
             }
-            return resultArray;
+            if(match){resultArray = [...resultArray,[tempData,parseInt(indexList[i])]];}
+        }
+        return resultArray;
     }
-
+    
     delete(tableName,columnsArray = 0, columnsValueArray = 0){
         let tablePath = this.DBpath+"/"+tableName+".bin";
         let indexToDelete = this.findWhere(tableName, [], columnsArray, columnsValueArray);
@@ -119,7 +113,6 @@ export class databse{
     update(tableName, columnsArray, oldColumnsValueArray, newColumnsValueArray, newColumnsArray = columnsArray){
         let tablePath = this.DBpath+"/"+tableName+".bin";
         let conf = getTableConf(this.DBpath,tableName);
-        let columnsArrayIndex = getColumnsIndex(conf, columnsArray);
         let newColumnsArrayIndex = getColumnsIndex(conf, newColumnsArray);
         
         let indexToUpdate = this.findWhere(tableName, "*", columnsArray, oldColumnsValueArray);
@@ -141,6 +134,7 @@ function chechSession(){
     }
     return "disconnected";
 }
+
 let base = new databse();
 console.log(base.connect("root","root123","testDB",""));
 //syncIndexList(base.DBpath, "Products")
@@ -150,5 +144,5 @@ console.log(base.findWhere("Products",  ['title','description'], ['id','title','
 //console.log(base.findWhere("test", ['name']));
 //console.log(base.findWhere("Products", "*"));
 //console.log(base.delete("Products",  ['id'],["1"]));
-console.log(base.findWhere("Products", "*"));
+console.log(base.findWhere("test", ["surname"]));
 //console.log(base.update("Products",['id','title','price'],["10","the title","100$"], ["1", "kk tie"], ["id", "title"]))

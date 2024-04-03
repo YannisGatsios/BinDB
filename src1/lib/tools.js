@@ -31,22 +31,17 @@ export function bufferDataToArray(BufferData){
         return array;
     }
 
-export function arrayToBuffer(data){
-        let asciiValues = data.join('').split('').map(char => char.charCodeAt(0));
-        let uint8Array = new Uint8Array(asciiValues.length + data.length - 1);
-        let currentIndex = 0;
-    
-        data.forEach((str, index) => {
-            let strAsciiValues = str.split('').map(char => char.charCodeAt(0));
-            uint8Array.set(strAsciiValues, currentIndex);
-            currentIndex += strAsciiValues.length;
-            if (index < data.length - 1) {
-                uint8Array[currentIndex] = NEXT_ELEMENT;
-                currentIndex++;
+export function arrayToBuffer(array){
+        let newData = Buffer.alloc(0);
+        for(let i = 0;i < array.length;i++){
+            if(Buffer.isBuffer(array[i])){
+                newData = Buffer.concat([newData, Buffer.from((array[i].length-1).toString(),'utf8'),Buffer.from(NEXT_ELEMENT.toString(16), 'hex'), array[i]])
+            }else{
+                newData = Buffer.concat([newData,Buffer.from(array[i],'utf8'),Buffer.from(NEXT_ELEMENT.toString(16), 'hex')])
             }
-        });
-        uint8Array = [...uint8Array, NEXT_ELEMENT, NEXT_ROW];
-        return new Buffer.from(uint8Array);
+        }
+        newData = Buffer.concat([newData,Buffer.from(NEXT_ROW.toString(16), 'hex')])
+        return newData
     }
 export function getColumnsIndex(tableConfig, columnsArray){
     let Array = [];

@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { arrayToBuffer,bufferDataToArray,endOfFirstVariable,shortenFile } from './tools.js';
+import { shortenFile } from './tools.js';
 
 
 export function readRow(path, indexStart = 0, endIndex=0){
@@ -37,7 +37,6 @@ export function deleteRow(path, indexStart = 0){
     while (index < fileSize){
         [data, newIndex] = readRow(path,index);
         newData = Buffer.concat([newData,data])
-        console.log(newData);
         index = newIndex;
     }
     shortenFile(path,indexStart);
