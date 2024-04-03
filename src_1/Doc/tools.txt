@@ -1,9 +1,0 @@
-require : fs
-
-functions
-    separateData
-    combineData
-    endOfFirstVariable
-    readFileAsync
-    readAndCreateUint8Array
-    

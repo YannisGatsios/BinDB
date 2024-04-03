@@ -1,10 +1,25 @@
-const fs = require('fs');
-const tools = require('./tools.js');
-const binio = require('./DBCmds.js');
+import fs from 'fs';
+import { appendData, readData } from "./lib/fileIO.js";
+import { lastIndex } from './lib/tools.js';
 
-//const binio = require('./BinIO.js');
-const filePath = "../Databases/CSV_DATABASE/Users.bin";
-const newData = new Uint8Array([0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64, 0x64]);
-var sleepSetTimeout_ctrl;
+function getConfPart(tablePath){
+    if(readData(tablePath,fs.statSync(tablePath).size-2).toString() === ';0'){
+        return readData(tablePath,0).toString().split(';');
+    }
+    let table = readData(tablePath,lastIndex(tablePath)).toString();
+    return table.split(';');
+}
 
-console.log(binio.updateValue(12, newData, filePath));
+export function getTableConf(tablePath){
+    return getConfPart(tablePath)[0].split(',');
+}
+
+export function getIndexes(tablePath){
+    return getConfPart(tablePath)[1].split(',');
+}
+
+export function appendIndex(tablePath, conf, newIndexes){
+    conf = conf.join(',');
+    newIndexes = newIndexes.join(',');
+    appendData(tablePath,[conf,newIndexes].join(';'));
+}
