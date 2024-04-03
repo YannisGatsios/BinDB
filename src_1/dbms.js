@@ -57,6 +57,13 @@ export class dbms{
         }
         return resultArray;
     }
+    delete(){
+        
+    }
+
+    update(){
+
+    }
 }
 let db = new dbms();
 //db.insert("Products",['[ellohello',1000000000 ,buf]);
