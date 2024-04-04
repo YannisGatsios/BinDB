@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { appendData, readData } from "./lib/fileIO.js";
-import { lastIndex } from './lib/tools.js';
+import { lastIndex, shortenFile, removeDiff } from './lib/tools.js';
 
 function getConfPart(tablePath){
     if(readData(tablePath,fs.statSync(tablePath).size-2).toString() === ';0'){
@@ -22,4 +22,14 @@ export function appendIndex(tablePath, conf, newIndexes){
     conf = conf.join(',');
     newIndexes = newIndexes.join(',');
     appendData(tablePath,[conf,newIndexes].join(';'));
+}
+
+export function deleteIndex(tablePath, indexes, conf, index){
+    let diff = parseInt(indexes[index+conf.length]) - parseInt(indexes[index]);
+    let result = [...indexes.slice(0,index), ...removeDiff(indexes.slice(index+conf.length), diff)];
+    conf = [conf.join(','),result.join(',')].join(';')
+
+    shortenFile(tablePath,result[result.length-1])
+    appendData(tablePath, conf)
+    return result;
 }

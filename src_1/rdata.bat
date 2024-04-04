@@ -1,2 +1,1 @@
-copy C:\Users\gatsi\OneDrive\MyFolders\Projects\BinDB\Databases\Products.bin C:\Users\gatsi\OneDrive\MyFolders\Projects\BinDB\Databases\testDB
-copy C:\Users\gatsi\OneDrive\MyFolders\Projects\BinDB\Databases\Products_index.bin C:\Users\gatsi\OneDrive\MyFolders\Projects\BinDB\Databases\testDB\tablesIndex
+copy C:\Users\gatsi\OneDrive\MyFolders\Projects\BinDB\Databases\testDB\testDB.Products.bdb C:\Users\gatsi\OneDrive\MyFolders\Projects\BinDB\Databases\

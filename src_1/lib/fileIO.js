@@ -27,7 +27,6 @@ export function deleteData(path, indexStart,endIndex = fs.statSync(path).size){
     let data = readData(path,indexStart,fileSize);
 
     let newData = data.slice(endIndex-indexStart);
-    console.log(newData)
 
     shortenFile(path,indexStart);
     appendData(path,newData);
