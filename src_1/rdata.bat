@@ -1,1 +1,0 @@
-copy C:\Users\gatsi\OneDrive\MyFolders\Projects\BinDB\Databases\testDB\testDB.Products.bdb C:\Users\gatsi\OneDrive\MyFolders\Projects\BinDB\Databases\
