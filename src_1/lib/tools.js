@@ -2,28 +2,28 @@ import fs from 'fs';
 import { readData } from './fileIO.js';
 
 export var cTools = {
-    name(conf){
+    getName(conf){
         return conf.split(':')[0];
     },
-    bufSize(conf){
+    getSize(conf){
         return parseInt(conf.split(':')[1]);
     },
-    type(conf){
+    getType(conf){
         return conf.split(':')[2];
     },
-    nameList(conf){
+    getNameList(conf){
         let result = [];
         for(let i = 0;i<conf.length;i++){
-            result[i] = this.name(conf[i]);
+            result[i] = this.getName(conf[i]);
         }
         return result;
     },
     autoIncrease(conf){
-        return conf = this.name(conf)+":"+(this.bufSize(conf)+1).toString()+":au";
+        return conf = this.getName(conf)+":"+(this.getSize(conf)+1).toString()+":au";
     },
     areValidTypes(array,conf, columnIindex){
         for(let i = 0;i < array.length;i++){
-            if(this.type(conf[columnIindex[i]]) !== typeof(array[i]) && !(this.type(conf[columnIindex[i]]) === "buffer" && Buffer.isBuffer(array[i])) && !(this.type(conf[columnIindex[i]]) === "au" && typeof(array[i]) === "number")){
+            if(this.getType(conf[columnIindex[i]]) !== typeof(array[i]) && !(this.getType(conf[columnIindex[i]]) === "buffer" && Buffer.isBuffer(array[i])) && !(this.getType(conf[columnIindex[i]]) === "au" && typeof(array[i]) === "number")){
                 return false;
             }
         }
@@ -75,7 +75,7 @@ export function getColumnsIndex(tableConfig, columnsArray){
     let Array = [];
     let index = 0;
     for(let i = 0;i < tableConfig.length;i++){
-        if(cTools.name(tableConfig[i]) == columnsArray[index]){
+        if(cTools.getName(tableConfig[i]) == columnsArray[index]){
             Array = [...Array,i];
             index++;
         }
@@ -97,29 +97,41 @@ export function arrayToBuffer(array, conf){
     let buf = []
     let index = 0;
     for(let i = 0; i < conf.length;i++){
-        if(typeof(array[index]) === cTools.type(conf[i])){
+        if(typeof(array[index]) === cTools.getType(conf[i])){
             buf[i] = Buffer.from(array[index].toString());
-        }else if(cTools.type(conf[i]) === "buffer" && Buffer.isBuffer(array[index])){
+        }else if(cTools.getType(conf[i]) === "buffer" && Buffer.isBuffer(array[index])){
             buf[i] = array[index];
-        }else if(cTools.type(conf[i]) === "au"){
+        }else if(cTools.getType(conf[i]) === "au"){
             buf[i] = Buffer.from((array[index]).toString());
         }else{return "arrayToBuffer(): Invalid data type.";}
         index++;
-        if(i+1 !== conf.length){if(parseInt(cTools.bufSize(conf[i])) < Buffer.from(array[index].toString()).length && cTools.type(conf[i]) !== "au"){return "Surpased length"}}
+        if(buf[i].length > cTools.getSize(conf[i])) return "Surpased maximum buffer size";
     }
     return buf;
+}
+
+export function jsonResult(array,column){
+    var result = new Object();
+    for(let i = 0;i < array.length;i++){
+        var json = new Object();
+        for(let j = 0;j < column.length;j++){
+            json[column[j]] = array[i][j]
+        }
+        result[i] = json;
+    }
+    return result;
 }
 
 export function BuffToArray(buffArray,tableConf){
     let result = [];
     for(let i = 0;i < tableConf.length;i++){    
-        if(cTools.type(tableConf[i]) === "string"){
+        if(cTools.getType(tableConf[i]) === "string"){
             result[i] = buffArray[i].toString();
-        }else if(cTools.type(tableConf[i]) === "number"){
+        }else if(cTools.getType(tableConf[i]) === "number"){
             result[i] = parseInt(buffArray[i].toString());
-        }else if(cTools.type(tableConf[i]) === "au"){
+        }else if(cTools.getType(tableConf[i]) === "au"){
             result[i] = parseInt(buffArray[i].toString());
-        }else if(cTools.type(tableConf[i]) === "buffer"){
+        }else if(cTools.getType(tableConf[i]) === "buffer"){
             result[i] = buffArray[i];
         }else{return ["Error"];}
     }
