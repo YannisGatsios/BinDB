@@ -2,51 +2,84 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { user } from '../lib/user.js';
 
-var privateAccesKey = crypto.randomBytes(64).toString('hex');
-
 export var auth = {
-    login(db , res, jsonData){
-        const username = jsonData.username;
-        const password = jsonData.password;
-        if(user.validateUser(db,username,password)){
+    login(db , req, res){
+        let data = "";
+        req.on('data', (chunk) => {
+            data += chunk;
+        });
+
+        req.on('end', () => {
             res.setHeader('Content-Type', 'application/json');
-            const user = {username: username}
-            const refreshKey = crypto.randomBytes(64).toString('hex');
-            const refreshToken = jwt.sign(user, refreshKey);
-            const accesToken = this.generateAccesToken(user, privateAccesKey);
-            db.update("users",["username"],[username],["token"],[refreshKey]);
-            db.unselectDB();
-            res.setHeader('authorization', refreshToken);
-            return JSON.stringify({accesToken: accesToken});
-        }
-        return error("Invalid login credetials.");
-    },
-    token(db, req, res, jsonData){
-        const username = jsonData.username;
-        db.selectDB("BinDB");
-        const refreshTokenKey = db.find("users",["token"],["username"],[username]);
-        this.authenticateToken(req, res, refreshTokenKey[1][0][0]);
-        if(res.statusCode === 200 && req.user.username === username){
-            const user = {username: username};
-            const accesToken = this.generateAccesToken(user, privateAccesKey);
-            return JSON.stringify({accesToken: accesToken});
-        }
-        return error("invelid authorization credetials.")
-    },
-    authenticateToken(req, res, privateKey = privateAccesKey){
-        const token = req.headers['authorization'];
-        if(token === null) return res.statusCode = 401;
-    
-        var data = "";
-        jwt.verify(token, privateKey, (err,user) => {
-            if(err) return res.statusCode = 403;
-            data += user;
-            res.statusCode = 200
-            req.user = user;
+            const jsonData = JSON.parse(data);
+            if(!jsonData["username"] || !jsonData["password"]) return res.end(error("Missing credentials."));
+
+            const username = jsonData.username;
+            const password = jsonData.password;
+
+            if(user.validateUser(db,username,password)){
+                const user = {username: username}
+                const accesKey = crypto.randomBytes(64).toString('hex');
+                const accesToken = this.newToken(user, accesKey);
+
+                db.selectDB("BinDB");
+                db.update("users",["username"],[username],["token"],[accesKey]);
+                db.unselectDB();
+
+                res.setHeader('authorization', accesToken);
+                return res.end(JSON.stringify({status: "success"}));
+            }
+            return res.end(error("Invalid login credetials."));
         });
     },
-    generateAccesToken(user, privateKey){
-        return jwt.sign(user, privateKey, {expiresIn: '30s'});
+    token(db, req, res){
+        let data = "";
+        req.on('data', (chunk) => {
+            data += chunk;
+        });
+
+        req.on('end', () => {
+            res.setHeader('Content-Type', 'application/json');
+            this.authenticateToken(db,req, res);
+            
+            if(res.statusCode === 200){
+                const accesKey = crypto.randomBytes(64).toString('hex');
+                const user = {username: req.user.username};
+                const accesToken = this.newToken(user, accesKey);
+
+                db.selectDB("BinDB")
+                db.update("users",["username"],[req.user.username],["token"],[accesKey]);
+                db.unselectDB();
+
+                res.setHeader('authorization', accesToken);
+                return res.end(JSON.stringify({status: "success"}));
+            }
+            return res.end(error("invelid authorization credetials."));
+        });
+    },
+    authenticateToken(db, req, res){
+        const token = req.headers['authorization'];
+        if(token === null || token.split(".").length !== 3) {
+            res.statusCode = 401;
+            return res.end(error("invelid authorization."));
+        }
+
+        const username = this.parseJwt(token);
+        db.selectDB("BinDB");
+        const accesKey = db.find("users",["token"],["username"],[username])[1][0][0];
+        db.unselectDB();
+
+        jwt.verify(token, accesKey, (err,user) => {
+            if(err) return res.statusCode = 403;
+            req.user = user;
+            return res.statusCode = 200;
+        });
+    },
+    newToken(user, privateKey){
+        return jwt.sign(user, privateKey, {expiresIn: '15m'});
+    },
+    parseJwt(token) {
+        return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString()).username;
     }
 }
 
