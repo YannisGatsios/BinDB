@@ -84,6 +84,8 @@ export class dbms{
         let [conf,indexes] = [getTableConf(tablePath), getIndexes(tablePath)];
         if(resultColumns === 0) resultColumns = cTools.getNameList(conf);
         let [columnIndArray,resultIndArray] = [getColumnsIndex(conf, columnsToSearch), getColumnsIndex(conf, resultColumns)];
+        if(resultIndArray.length === 0 && resultColumns !== "index") return "Invalid reuslt argument";
+        if(columnIndArray.length === 0 && columnsToSearch !== 0) return "Invalid search argument";
         
         let [resultArray, row, maching] = [ [], [], false ];
         for(let i = conf.length-1;i < indexes.length;i++){
