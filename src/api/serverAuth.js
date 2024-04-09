@@ -60,8 +60,7 @@ export var auth = {
     authenticateToken(db, req, res){
         const token = req.headers['authorization'];
         if(token === null || token.split(".").length !== 3) {
-            res.statusCode = 401;
-            return res.end(error("invelid authorization."));
+            return res.statusCode = 401;
         }
 
         const username = this.parseJwt(token);

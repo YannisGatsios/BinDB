@@ -12,7 +12,7 @@ var server = http.createServer((req,res) =>{
         auth.login(db, req, res)
     }else if(req.url === "/api/token" && req.method === "POST"){
         auth.token(db, req, res)
-    }else if(req.url === "/api/find" && req.method === "GET"){
+    }else if(req.url === "/api/find" && req.method === "POST"){
         handler.find(db, req, res)
     }else{
         res.writeHead(404 , {"content-type": "text/plain"});
@@ -32,15 +32,15 @@ var handler = {
             res.setHeader('Content-Type', 'application/json');
             const jsonData = JSON.parse(data);
             if(!jsonData["database"] || !jsonData["table"]) return res.end(error("Data is missing."));
+
             const database = jsonData.database;
             const table = jsonData.table;
-            var resultColumns = 0;
-            var columnsToSearch = 0;
-            var valueOfColumn = 0;
-            if(jsonData["resultColumns"]){resultColumns = jsonData.resultColumns.split(",");}
-            if(jsonData["columnsToSearch"]){columnsToSearch = jsonData.columnsToSearch.split(",");}
-            if(jsonData["valueOfColumn"]){valueOfColumn = jsonData.valueOfColumn.split(",");}
+            const resultColumns = jsonData.resultColumns;
+            const columnsToSearch = jsonData.columnsToSearch;
+            const valueOfColumn = jsonData.valueOfColumn;
+
             auth.authenticateToken(db, req, res);
+            if(res.statusCode === 401) return res.end(error("Inavlid token."))
             if(res.statusCode === 200){
                 if(db.selectDB(database) === "Invalid database."){
                     res.statusCode = 422;
@@ -48,6 +48,7 @@ var handler = {
                 }
                 const find = db.find(table, resultColumns, columnsToSearch, valueOfColumn);
                 db.unselectDB();
+
                 var result = jsonResult(find[1],find[0]);
                 return res.end(JSON.stringify(result));
             }
@@ -71,4 +72,10 @@ var handler = {
     }
 }
 
-server.listen(8080, () => console.log('Running at port '+8080));
+server.listen(80, () => console.log('Running at port '+80));
+
+function jsonExists(jsonValue){
+    if(!jsonValue) return 0;
+    if(typeof(jsonValue) === "string") return jsonValue.split(",");
+    return jsonValue
+}
