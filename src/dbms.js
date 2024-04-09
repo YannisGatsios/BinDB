@@ -42,7 +42,7 @@ export class dbms{
     newDatabase(database){
         let tablesConf = readData(this.tablesConfPath,0).toString().split(";");
         let databases = tablesConf[0];
-        if(databases.includes(database)) return "Database already exists."
+        if(databases.includes(database)) return "Database already exists.";
         tablesConf[0] = [...databases.split(","),database].join(",");
         shortenFile(this.tablesConfPath,0)
         appendData(this.tablesConfPath, tablesConf.join(";"))
@@ -116,7 +116,7 @@ export class dbms{
                 maching = false;
             }
         }
-        return [cTools.getNameList(conf),resultArray];
+        return [resultColumns,resultArray];
     }
 
     deleteRow(tableName,index){

@@ -3,10 +3,10 @@ import bcrypt from 'bcrypt';
 export var user = {
     validateUser(database,username, password){
         database.selectDB("BinDB");
-        const matchingUsernames = database.find("users", 0, ['username'], [username])[1];
-        let res = false; 
-        if (matchingUsernames[0] !== null){
-            res = bcrypt.compareSync(password, matchingUsernames[0][3], function(err, result) {});
+        const usersFound = database.find("users", 0, ['username'], [username])[1];
+        let res = false;
+        if (usersFound.length !== 0){
+            res = bcrypt.compareSync(password, usersFound[0][3], function(err, result) {});
         }
         return res;
     },
@@ -29,7 +29,7 @@ export var user = {
                 if(er){
                     res = "Error on updating users password: "+er;
                 }else{
-                    database.update("users", ["username"], [username], ["teken","password_hash"], ["0", hash]);
+                    database.update("users", ["username"], [username], ["token","password_hash"], ["0", hash]);
                 }
             });
         }else res = "Invalid user credetials.";
