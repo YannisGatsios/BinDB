@@ -122,6 +122,25 @@ export function jsonResult(array,column){
     return result;
 }
 
+export function jsonToArray(json) {
+    let objetsContents = Object.keys(json);
+    let result = [];
+    for (let i = 0; i < objetsContents.length; i++) { // Corrected typo here
+        if (typeof json[objetsContents[i]] === 'number' || typeof json[objetsContents[i]] === 'string') {
+            result.push(json[objetsContents[i]]); // Use push to add elements to the array
+        } else if (typeof json[objetsContents[i]] === 'object' && json[objetsContents[i]] !== null) {
+            if (json[objetsContents[i]].type === 'Buffer' && Array.isArray(json[objetsContents[i]].data)) {
+                result.push(Buffer.from(json[objetsContents[i]].data)); // Extract data from image property
+            } else {
+                return "Invalid data type in object.";
+            }
+        } else {
+            return "Invalid data type.";
+        }
+    }
+    return result;
+}
+
 export function BuffToArray(buffArray,tableConf){
     let result = [];
     for(let i = 0;i < tableConf.length;i++){    

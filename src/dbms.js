@@ -123,36 +123,34 @@ export class dbms{
         if(this.database === "") return "no database selected";
         let tablePath = path(tableName, this.BDpath, this.database, this.tablesConfPath)+this.database+"."+tableName+".bdb";
         let [conf,indexList] = [getTableConf(tablePath), getIndexes(tablePath)];
-        if(!indexList.includes(index.toString())) return "invalid Index.";
-
-        let indexListIndex = indexList.indexOf(index.toString());
-
-        deleteData(tablePath, indexList[indexListIndex], indexList[indexListIndex+conf.length])
-        deleteIndex(tablePath, indexList, conf, indexListIndex);
-
-        return "deleted row with index of: "+index;
+        index = index*conf.length;
+        if(indexList.length <= index+1 || index < 0) return "invalid Index.";
+        
+        deleteData(tablePath, indexList[index], indexList[index+conf.length])
+        indexList = deleteIndex(tablePath, indexList, conf, index);
+        
+        return ["deleted", indexList];
     }
-
-    delete(tableName,columnsToSearch = 0, valueOfColumn = columnsToSearch){
+    
+    delete(tableName,columnsToSearch = 0, valueOfColumn = 0){
         if(this.database === "") return "no database selected";
         let tablePath = path(tableName, this.BDpath, this.database, this.tablesConfPath)+this.database+"."+tableName+".bdb";
         let [conf,indexList] = [getTableConf(tablePath), getIndexes(tablePath)];
         
         let result = this.find(tableName, "index" , columnsToSearch, valueOfColumn)[1];
         if(result.length < 1) return "Nothing found to delete.";
-        let index = indexList.indexOf(result[result.length-1].toString());
         for(let i = result.length-1;i >= 0;i--){
-            this.deleteRow(tableName,parseInt(indexList[index]));
-            index = indexList.indexOf(result[i].toString());
-            indexList = deleteIndex(tablePath, indexList, conf, index);
+            let index = indexList.indexOf(result[i].toString())/conf.length;
+            indexList = this.deleteRow(tableName,index)[1];
         }
-        return result.length+" rows deleted."
+        return "rows deleted."
     }
 
     updateRow(tableName, columnsToUpdate, newValues, index){
         if(this.database === "") return "no database selected";
         let tablePath = path(tableName, this.BDpath, this.database, this.tablesConfPath)+this.database+"."+tableName+".bdb";
         let [conf,indexList] = [getTableConf(tablePath), getIndexes(tablePath)];
+        
         if(!indexList.includes(index.toString())) return "invalid Index.";
         if(columnsToUpdate.length > conf.length || newValues.length !== columnsToUpdate.length) return "Inalid arguments.";
         let comlumnIndex = getColumnsIndex(conf, columnsToUpdate);

@@ -75,7 +75,7 @@ export var auth = {
         });
     },
     newToken(user, privateKey){
-        return jwt.sign(user, privateKey, {expiresIn: '15m'});
+        return jwt.sign(user, privateKey, {expiresIn: '30m'});
     },
     parseJwt(token) {
         return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString()).username;
@@ -84,8 +84,10 @@ export var auth = {
 
 export function error(msg){
     return JSON.stringify({
-        "Error":{
-            "msg": msg
+        "status":{
+            "Error":{
+                "msg": msg
+            }
         }
     })
 }
