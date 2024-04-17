@@ -21,15 +21,17 @@ export var cTools = {
     autoIncrease(conf){
         return conf = this.getName(conf)+":"+(this.getSize(conf)+1).toString()+":au";
     },
-    areValidTypes(array,conf, columnIindex){
-        for(let i = 0;i < array.length;i++){
-            if(this.getType(conf[columnIindex[i]]) !== typeof(array[i]) && !(this.getType(conf[columnIindex[i]]) === "buffer" && Buffer.isBuffer(array[i])) && !(this.getType(conf[columnIindex[i]]) === "au" && typeof(array[i]) === "number")){
-                return false;
-            }
-        }
-        return true;
-    }
+
 }
+export function areValidTypes(update, conf, columnIindex){
+    for(let i = 0;i < Object.keys(update).length;i++){
+            if(conf[Object.keys(update)[i]].type === typeof(update[Object.keys(update)[i]]) || (conf[Object.keys(update)[i]].type === "buffer" && Buffer.isBuffer(update[Object.keys(update)[i]])) || (conf[Object.keys(update)[i]].type === "au" && typeof(update[Object.keys(update)[i]]) === "number")){
+                return true
+            }
+    }
+    return false;
+}
+
 
 export function lastItem(Array){
     return Array[Array.length-1]
@@ -63,19 +65,11 @@ export function sliceArray(array, chunkSize) {
     return chunks;
 }
 
-export function removeDiff(array, value){
-    let result = [];
-    for(let i = 0; i < array.length;i++){
-        result[i] = (parseInt(array[i])-value).toString();
-    }
-    return result;
-}
-
-export function getColumnsIndex(tableConfig, columnsArray){
+export function getColumnsIndex(conf, columnsArray){
     let Array = [];
     let index = 0;
-    for(let i = 0;i < tableConfig.length;i++){
-        if(cTools.getName(tableConfig[i]) == columnsArray[index]){
+    for(let i = 0;i < conf.len;i++){
+        if(Object.keys(conf)[i] === columnsArray[index]){
             Array = [...Array,i];
             index++;
         }
@@ -83,29 +77,29 @@ export function getColumnsIndex(tableConfig, columnsArray){
     return Array;
 }
 
-export function newIndexes(bufferArray, indexList){
-    let lastIndex = parseInt(lastItem(indexList));
-    let newIndexes = [];
-    for(let i = 0;i < bufferArray.length;i++){
-        newIndexes[i] = ((lastIndex+bufferArray[i].length).toString())
-        lastIndex = parseInt(newIndexes[i])
+export function newIndex(array, indexList){
+    let result = [indexList[indexList.length-1][0]];
+    for(let i = 1;i < array.length;i++){
+        result[i] = result[i-1]+array[i-1].length;
     }
-    return newIndexes;
+    indexList[indexList.length-1] = result;
+    indexList[indexList.length] = [result[result.length-1]+array[array.length-1].length]
+    return indexList;
 }
 
 export function arrayToBuffer(array, conf){
     let buf = []
     let index = 0;
-    for(let i = 0; i < conf.length;i++){
-        if(typeof(array[index]) === cTools.getType(conf[i])){
+    for(let i = 0; i < conf.len;i++){
+        if(typeof(array[index]) === conf[conf.names[i]].type){
             buf[i] = Buffer.from(array[index].toString());
-        }else if(cTools.getType(conf[i]) === "buffer" && Buffer.isBuffer(array[index])){
+        }else if(conf[conf.names[i]].type === "buffer" && Buffer.isBuffer(array[index])){
             buf[i] = array[index];
-        }else if(cTools.getType(conf[i]) === "au"){
+        }else if(conf[conf.names[i]].type === "au"){
             buf[i] = Buffer.from((array[index]).toString());
         }else{return "arrayToBuffer(): Invalid data type.";}
         index++;
-        if(buf[i].length > cTools.getSize(conf[i])) return "Surpased maximum buffer size";
+        if(buf[i].length > conf[conf.names[i]].size) return "Surpased maximum buffer size";
     }
     return buf;
 }
@@ -125,12 +119,12 @@ export function jsonResult(array,column){
 export function jsonToArray(json) {
     let objetsContents = Object.keys(json);
     let result = [];
-    for (let i = 0; i < objetsContents.length; i++) { // Corrected typo here
+    for (let i = 0; i < objetsContents.length; i++) {
         if (typeof json[objetsContents[i]] === 'number' || typeof json[objetsContents[i]] === 'string') {
-            result.push(json[objetsContents[i]]); // Use push to add elements to the array
+            result.push(json[objetsContents[i]]);
         } else if (typeof json[objetsContents[i]] === 'object' && json[objetsContents[i]] !== null) {
             if (json[objetsContents[i]].type === 'Buffer' && Array.isArray(json[objetsContents[i]].data)) {
-                result.push(Buffer.from(json[objetsContents[i]].data)); // Extract data from image property
+                result.push(Buffer.from(json[objetsContents[i]].data));
             } else {
                 return "Invalid data type in object.";
             }
@@ -141,27 +135,28 @@ export function jsonToArray(json) {
     return result;
 }
 
-export function BuffToArray(buffArray,tableConf){
+export function BuffToArray(array, conf){
     let result = [];
-    for(let i = 0;i < tableConf.length;i++){    
-        if(cTools.getType(tableConf[i]) === "string"){
-            result[i] = buffArray[i].toString();
-        }else if(cTools.getType(tableConf[i]) === "number"){
-            result[i] = parseInt(buffArray[i].toString());
-        }else if(cTools.getType(tableConf[i]) === "au"){
-            result[i] = parseInt(buffArray[i].toString());
-        }else if(cTools.getType(tableConf[i]) === "buffer"){
-            result[i] = buffArray[i];
+    for(let i = 0;i < conf.len;i++){    
+        if(conf[Object.keys(conf)[i]].type === "string"){
+            result.push(array[i].toString());
+        }else if(conf[Object.keys(conf)[i]].type === "number"){
+            result.push(parseInt(array[i].toString()));
+        }else if(conf[Object.keys(conf)[i]].type === "au"){
+            result.push(parseInt(array[i].toString()));
+        }else if(conf[Object.keys(conf)[i]].type === "buffer"){
+            result.push(array[i]);
         }else{return ["Error"];}
     }
     return result;
 }
 
-export function readRow(tablePath, indexListIndex, indexList, conf){
+export function readRow(tablePath, rowindex, indexList){
     let result = [];
-    for(let i = 0;i < conf.length;i++){
-        result[i] = readData(tablePath, indexList[indexListIndex+i], indexList[indexListIndex+i+1])
+    for(let i = 0;i < indexList[rowindex].length-1;i++){
+        result.push(readData(tablePath, indexList[rowindex][i], indexList[rowindex][i+1]))
     }
+    result.push(readData(tablePath, indexList[rowindex][indexList[0].length-1], indexList[rowindex+1][0]))
     return result;
 }
 

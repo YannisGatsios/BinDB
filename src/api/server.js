@@ -22,6 +22,8 @@ var server = http.createServer((req,res) =>{
         handler.delete(db, req, res);
     }else  if(req.url === "/api/updateRow" && req.method === "PATCH"){
         handler.updateRow(db, req, res);
+    }else  if(req.url === "/api/update" && req.method === "PATCH"){
+        handler.update(db, req, res);
     }else{
         res.writeHead(404 , {"content-type": "text/plain"});
         res.end("Not found");
@@ -148,10 +150,64 @@ var handler = {
         });
     },
     updateRow(db, req, res){
-        
+        let data = "";
+        req.on('data', (chunk) => {
+            data += chunk;
+        });
+        req.on('end', () => {
+            res.setHeader('Content-Type', 'application/json');
+            const jsonData = JSON.parse(data);
+            if(!jsonData["database"] || !jsonData["table"]) return res.end(error("Data is missing."));
+
+            const database = jsonData.database;
+            const table = jsonData.table;
+            const columnsToUpdate = jsonData.columnsToUpdate;
+            const newValues = jsonData.newValues;
+            const index = jsonData.index;
+            auth.authenticateToken(db, req, res);
+            if(res.statusCode === 401 || res.statusCode === 403) return res.end(error("Inavlid token."));
+            if(res.statusCode === 200){
+                db.selectDB(database);
+                const message = db.updateRow(table, columnsToUpdate, newValues, index);
+                db.unselectDB();
+                if(message === "Updated"){
+                    return res.end(JSON.stringify({"result": message}))
+                }
+                res.statusCode = 400;
+                return res.end(error(message));
+            }
+            return res.end(error("Invalid data"));
+        });
     },
     update(db, req, res){
-        
+        let data = "";
+        req.on('data', (chunk) => {
+            data += chunk;
+        });
+        req.on('end', () => {
+            res.setHeader('Content-Type', 'application/json');
+            const jsonData = JSON.parse(data);
+            if(!jsonData["database"] || !jsonData["table"]) return res.end(error("Data is missing."));
+
+            const database = jsonData.database;
+            const table = jsonData.table;
+            const columnsToUpdate = jsonData.columnsToUpdate;
+            const newValues = jsonData.newValues;
+            const index = jsonData.index;
+            auth.authenticateToken(db, req, res);
+            if(res.statusCode === 401 || res.statusCode === 403) return res.end(error("Inavlid token."));
+            if(res.statusCode === 200){
+                db.selectDB(database);
+                const message = db.updateRow(table, columnsToUpdate, newValues, index);
+                db.unselectDB();
+                if(message === "Updated"){
+                    return res.end(JSON.stringify({"result": message}))
+                }
+                res.statusCode = 400;
+                return res.end(error(message));
+            }
+            return res.end(error("Invalid data"));
+        });
     }
 }
 

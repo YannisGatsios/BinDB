@@ -14,16 +14,21 @@ export var auth = {
             const jsonData = JSON.parse(data);
             if(!jsonData["username"] || !jsonData["password"]) return res.end(error("Missing credentials."));
 
-            const username = jsonData.username;
-            const password = jsonData.password;
-
-            if(user.validateUser(db,username,password)){
-                const user = {username: username}
+            if(user.validateUser(db,jsonData.username,jsonData.password)){
+                const user = {username: jsonData.username}
                 const accesKey = crypto.randomBytes(64).toString('hex');
                 const accesToken = this.newToken(user, accesKey);
 
                 db.selectDB("BinDB");
-                db.update("users",["username"],[username],["token"],[accesKey]);
+                const query = {
+                    where: {
+                        username: jsonData.username
+                    },
+                    update: {
+                        token: accesKey
+                    }
+                }
+                db.update("users", query);
                 db.unselectDB();
 
                 res.setHeader('authorization', accesToken);

@@ -3,10 +3,17 @@ import bcrypt from 'bcrypt';
 export var user = {
     validateUser(database,username, password){
         database.selectDB("BinDB");
-        const usersFound = database.find("users", 0, ['username'], [username])[1];
+        const query = {
+            select: 0,
+            where: {
+                username: username
+            }
+        }
+        const usersFound = database.find("users", query);
+        database.unselectDB();
         let res = false;
         if (usersFound.length !== 0){
-            res = bcrypt.compareSync(password, usersFound[0][3], function(err, result) {});
+            res = bcrypt.compareSync(password, usersFound[0].password_hash, function(err, result) {});
         }
         return res;
     },
