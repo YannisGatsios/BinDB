@@ -53,7 +53,15 @@ export var auth = {
                 const accesToken = this.newToken(user, accesKey);
 
                 db.selectDB("BinDB")
-                db.update("users",["username"],[req.user.username],["token"],[accesKey]);
+                const query = {
+                    where: {
+                        username: req.user.username
+                    },
+                    update: {
+                        token: accesKey
+                    }
+                }
+                db.update("users", query);
                 db.unselectDB();
 
                 res.setHeader('authorization', accesToken);
@@ -70,10 +78,16 @@ export var auth = {
 
         const username = this.parseJwt(token);
         db.selectDB("BinDB");
-        const accesKey = db.find("users",["token"],["username"],[username])[1][0][0];
+        const query = {
+            select: ["token"],
+            where: {
+                username: [username]
+            }
+        }
+        const accesKey = db.find("users", query);
         db.unselectDB();
 
-        jwt.verify(token, accesKey, (err,user) => {
+        jwt.verify(token, accesKey[0].token, (err,user) => {
             if(err) return res.statusCode = 403;
             req.user = user;
             return res.statusCode = 200;

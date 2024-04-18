@@ -117,17 +117,12 @@ export function jsonResult(array,column){
 }
 
 export function jsonToArray(json) {
-    let objetsContents = Object.keys(json);
     let result = [];
-    for (let i = 0; i < objetsContents.length; i++) {
-        if (typeof json[objetsContents[i]] === 'number' || typeof json[objetsContents[i]] === 'string') {
-            result.push(json[objetsContents[i]]);
-        } else if (typeof json[objetsContents[i]] === 'object' && json[objetsContents[i]] !== null) {
-            if (json[objetsContents[i]].type === 'Buffer' && Array.isArray(json[objetsContents[i]].data)) {
-                result.push(Buffer.from(json[objetsContents[i]].data));
-            } else {
-                return "Invalid data type in object.";
-            }
+    for (let i = 0; i < Object.keys(json).length; i++) {
+        if ((typeof(json[Object.keys(json)[i]]) === 'number' || typeof(json[Object.keys(json)[i]]) === 'string') && !json[Object.keys(json)[i]].type) {
+            result.push(json[Object.keys(json)[i]]);
+        } else if(json[Object.keys(json)[i]].type){
+            result.push(Buffer.from(json[Object.keys(json)[i]].data))
         } else {
             return "Invalid data type.";
         }

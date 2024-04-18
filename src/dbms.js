@@ -7,9 +7,11 @@ import { BuffToArray, getColumnsIndex, shortenFile, areValidTypes, arrayToBuffer
 var buf = Buffer.from("hellohell]");
 
 export class dbms{
+
     tablesConfPath = "./.tables.conf";
     BDpath = '../Databases/';
     database = "";
+
     selectDB(database){
         let tablesConf = readData(this.tablesConfPath,0).toString().split(";");
         if(!tablesConf[0].slice(",").includes(database)) return "Invalid database.";
@@ -47,6 +49,11 @@ export class dbms{
         shortenFile(this.tablesConfPath,0)
         appendData(this.tablesConfPath, tablesConf.join(";"))
         return database+" created.";
+    }
+
+    getConf(tableName){
+        const tablePath = path(tableName, this.BDpath, this.database, this.tablesConfPath)+this.database+"."+tableName+".bdb";
+        return getTableConf(tablePath);
     }
 
     insert(tableName,query){

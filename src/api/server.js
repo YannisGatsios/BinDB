@@ -1,6 +1,6 @@
 import http from 'http';
 import { dbms } from '../dbms.js';
-import { jsonResult, jsonToArray } from '../lib/tools.js';
+import { jsonToArray,jsonResult } from '../lib/tools.js';
 import { auth, error } from  './serverAuth.js'
 
 var db = new dbms();
@@ -39,25 +39,20 @@ var handler = {
         req.on('end', () => {
             res.setHeader('Content-Type', 'application/json');
             const jsonData = JSON.parse(data);
-            if(!jsonData["database"] || !jsonData["table"]) return res.end(error("Data is missing."));
-
-            const database = jsonData.database;
-            const table = jsonData.table;
-            const resultColumns = jsonData.resultColumns;
-            const columnsToSearch = jsonData.columnsToSearch;
-            const valueOfColumn = jsonData.valueOfColumn;
-
+            if(!jsonData["database"] || !jsonData["table"] || !jsonData["query"]) return res.end(error("Data is missing."));
+            if(Object.keys(jsonData.query).length > 2 || !Object.keys(jsonData.query).includes("select") || !Object.keys(jsonData.query).includes("where")) return res.end(error("Invalid query."));
             auth.authenticateToken(db, req, res);
             if(res.statusCode === 401 || res.statusCode === 403) return res.end(error("Inavlid token."));
+            
             if(res.statusCode === 200){
-                if(db.selectDB(database) === "Invalid database."){
+                if(db.selectDB(jsonData["database"]) === "Invalid database."){
                     res.statusCode = 422;
                     return res.end(error("Invalid database."))
                 }
-                const find = db.find(table, resultColumns, columnsToSearch, valueOfColumn);
+
+                const result = db.find(jsonData["table"], jsonData.query);
                 db.unselectDB();
 
-                var result = jsonResult(find[1],find[0]);
                 return res.end(JSON.stringify(result));
             }
             return res.end(error("Invalid token."));
@@ -71,17 +66,19 @@ var handler = {
         req.on('end', () => {
             res.setHeader('Content-Type', 'application/json');
             const jsonData = JSON.parse(data);
-            if(!jsonData["database"] || !jsonData["table"]) return res.end(error("Data is missing."));
-
-            const database = jsonData.database;
-            const table = jsonData.table;
-            const dataToInsert = jsonData.data;
-            console.log(jsonToArray(dataToInsert))
+            if(!jsonData["database"] || !jsonData["table"] || !jsonData["query"]) return res.end(error("Data is missing."));
+            if(Object.keys(jsonData.query).length > 1 || !Object.keys(jsonData.query).includes("data")) return res.end(error("Invalid query."));
             auth.authenticateToken(db, req, res);
             if(res.statusCode === 401 || res.statusCode === 403) return res.end(error("Inavlid token."));
+
             if(res.statusCode === 200){
-                db.selectDB(database);
-                const message = db.insert(table, jsonToArray(dataToInsert));
+                jsonData.query.data = jsonResult([jsonToArray(jsonData.query.data)],Object.keys(jsonData.query.data))[0];
+                if(db.selectDB(jsonData["database"]) === "Invalid database."){
+                    res.statusCode = 422;
+                    return res.end(error("Invalid database."))
+                }
+                console.log(jsonData.query.data)
+                const message = db.insert(jsonData.table, jsonData.query);
                 db.unselectDB();
                 if(message === "Inserted"){
                     return res.end(JSON.stringify({"result": message}))
