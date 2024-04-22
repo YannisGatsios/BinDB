@@ -77,7 +77,6 @@ var handler = {
                     res.statusCode = 422;
                     return res.end(error("Invalid database."))
                 }
-                console.log(jsonData.query.data)
                 const message = db.insert(jsonData.table, jsonData.query);
                 db.unselectDB();
                 if(message === "Inserted"){
@@ -97,16 +96,15 @@ var handler = {
         req.on('end', () => {
             res.setHeader('Content-Type', 'application/json');
             const jsonData = JSON.parse(data);
-            if(!jsonData["database"] || !jsonData["table"]) return res.end(error("Data is missing."));
-
-            const database = jsonData.database;
-            const table = jsonData.table;
-            const index = jsonData.index;
+            if(!jsonData["database"] || !jsonData["table"] || !jsonData["query"]) return res.end(error("Data is missing."));
             auth.authenticateToken(db, req, res);
             if(res.statusCode === 401 || res.statusCode === 403) return res.end(error("Inavlid token."));
             if(res.statusCode === 200){
-                db.selectDB(database);
-                const message = db.deleteRow(table, index)[0];
+                if(db.selectDB(jsonData["database"]) === "Invalid database."){
+                    res.statusCode = 422;
+                    return res.end(error("Invalid database."))
+                }
+                const message = db.deleteRow(jsonData.table, jsonData.query);
                 db.unselectDB();
                 if(message === "deleted"){
                     return res.end(JSON.stringify({"result": message}))
@@ -125,19 +123,17 @@ var handler = {
         req.on('end', () => {
             res.setHeader('Content-Type', 'application/json');
             const jsonData = JSON.parse(data);
-            if(!jsonData["database"] || !jsonData["table"]) return res.end(error("Data is missing."));
-
-            const database = jsonData.database;
-            const table = jsonData.table;
-            const columnsToSearch = jsonData.columnsToSearch;
-            const valueOfColumn = jsonData.valueOfColumn;
+            if(!jsonData["database"] || !jsonData["table"] || !jsonData["query"]) return res.end(error("Data is missing."));
             auth.authenticateToken(db, req, res);
             if(res.statusCode === 401 || res.statusCode === 403) return res.end(error("Inavlid token."));
             if(res.statusCode === 200){
-                db.selectDB(database);
-                const message = db.delete(table, columnsToSearch, valueOfColumn);
+                if(db.selectDB(jsonData["database"]) === "Invalid database."){
+                    res.statusCode = 422;
+                    return res.end(error("Invalid database."))
+                }
+                const message = db.delete(jsonData.table, jsonData.query);
                 db.unselectDB();
-                if(message === "rows deleted."){
+                if(message === "rows deleted." || message === "Nothing found to delete."){
                     return res.end(JSON.stringify({"result": message}))
                 }
                 res.statusCode = 400;
@@ -154,18 +150,15 @@ var handler = {
         req.on('end', () => {
             res.setHeader('Content-Type', 'application/json');
             const jsonData = JSON.parse(data);
-            if(!jsonData["database"] || !jsonData["table"]) return res.end(error("Data is missing."));
-
-            const database = jsonData.database;
-            const table = jsonData.table;
-            const columnsToUpdate = jsonData.columnsToUpdate;
-            const newValues = jsonData.newValues;
-            const index = jsonData.index;
+            if(!jsonData["database"] || !jsonData["table"] || !jsonData["query"]) return res.end(error("Data is missing."));
             auth.authenticateToken(db, req, res);
             if(res.statusCode === 401 || res.statusCode === 403) return res.end(error("Inavlid token."));
             if(res.statusCode === 200){
-                db.selectDB(database);
-                const message = db.updateRow(table, columnsToUpdate, newValues, index);
+                if(db.selectDB(jsonData["database"]) === "Invalid database."){
+                    res.statusCode = 422;
+                    return res.end(error("Invalid database."))
+                }
+                const message = db.updateRow(jsonData.table, jsonData.query);
                 db.unselectDB();
                 if(message === "Updated"){
                     return res.end(JSON.stringify({"result": message}))
@@ -184,20 +177,17 @@ var handler = {
         req.on('end', () => {
             res.setHeader('Content-Type', 'application/json');
             const jsonData = JSON.parse(data);
-            if(!jsonData["database"] || !jsonData["table"]) return res.end(error("Data is missing."));
-
-            const database = jsonData.database;
-            const table = jsonData.table;
-            const columnsToUpdate = jsonData.columnsToUpdate;
-            const newValues = jsonData.newValues;
-            const index = jsonData.index;
+            if(!jsonData["database"] || !jsonData["table"] || !jsonData["query"]) return res.end(error("Data is missing."));
             auth.authenticateToken(db, req, res);
             if(res.statusCode === 401 || res.statusCode === 403) return res.end(error("Inavlid token."));
             if(res.statusCode === 200){
-                db.selectDB(database);
-                const message = db.updateRow(table, columnsToUpdate, newValues, index);
+                if(db.selectDB(jsonData["database"]) === "Invalid database."){
+                    res.statusCode = 422;
+                    return res.end(error("Invalid database."))
+                }
+                const message = db.update(jsonData.table, jsonData.query);
                 db.unselectDB();
-                if(message === "Updated"){
+                if(message === "rows updated."|| message === "Nothing found to update."){
                     return res.end(JSON.stringify({"result": message}))
                 }
                 res.statusCode = 400;

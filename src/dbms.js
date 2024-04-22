@@ -138,7 +138,7 @@ export class dbms{
         deleteData(tablePath, indexList[query.index][0], indexList[query.index+1][0])
         indexList = deleteIndex(tablePath, indexList, conf, query.index);
         
-        return ["deleted", indexList];
+        return "deleted";
     }
     
     delete(tableName,query){
@@ -154,7 +154,9 @@ export class dbms{
             const query = {
                 index: result[i].row
             }
-            indexList = this.deleteRow(tableName,query)[1];
+            const message = this.deleteRow(tableName,query);
+            if(message !== "deleted") return message;
+            indexList = getIndexList(tablePath);
         }
         return "rows deleted."
     }
@@ -175,14 +177,16 @@ export class dbms{
         for(let i = 0;i < comlumnIndex.length;i++){
             row[comlumnIndex[i]] = query.update[Object.keys(query.update)[i]];
         }
-        const deleteQuery = {
-            index: query.index
-        }
-        this.deleteRow(tableName, deleteQuery);
         const insertQuery = {
             data: jsonResult([row], conf.names)[0]
         }
-        this.insert(tableName, insertQuery)
+        const message = this.insert(tableName, insertQuery);
+        if(message !== "Inserted") return message
+        const deleteQuery = {
+            index: query.index
+        }
+        const deleteMessage = this.deleteRow(tableName, deleteQuery);
+        if(deleteMessage !== "deleted") return deleteMessage
         return "Updated";
     }
 
@@ -193,15 +197,16 @@ export class dbms{
             where: query.where
         }
         const result = this.find(tableName, findQuery);
-        if(Object.keys(result).length < 1) return "Nothing found to delete.";
+        if(Object.keys(result).length < 1) return "Nothing found to update.";
         for(let i = Object.keys(result).length-1;i >= 0;i--){
             const updateQuery = {
                 index: result[i].row,
                 update: query.update
             }
-            this.updateRow(tableName, updateQuery);
+            const message = this.updateRow(tableName, updateQuery);
+            if(message !== "Updated") return message;
         }
-        return result.length+" rows updated."
+        return "rows updated."
     }
 }
 
@@ -263,7 +268,7 @@ query = {
         name: "John_Gats"
     }
 }
-//console.log(db.update("Products",query))
+console.log(db.update("Products",query))
 query = {
     select: 0,
     where: {
@@ -271,4 +276,4 @@ query = {
         age: [505]
     }
 }
-console.log(db.find("Products",query));*/
+//console.log(db.find("Products",query));*/
